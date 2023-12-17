@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/utils/Counters.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "../node_modules/@openzeppelin/contracts/utils/Counters.sol";
+import "../node_modules/@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "../node_modules/@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
 import "./NFT.sol";
 
@@ -107,12 +107,12 @@ contract NFTMarketplace is NFT {
     /* Updates the listing price of the contract */
     function updateListingPrice(uint _listingPrice) public payable onlyOwner {
         // TODO: Change the listing price
-        ____________
+        listingPrice = _listingPrice;
     }
 
     /* Returns the listing price of the contract */
     // TODO: This function needs to be publically callable.
-    function getListingPrice() ______________________ {
+    function getListingPrice() public view returns (uint256) {
         return listingPrice;
     }
 
@@ -124,11 +124,11 @@ contract NFTMarketplace is NFT {
         uint itemCount = 0;
 
         // TODO: Increment from the id of the first NFT to the last NFT
-        for (________) {
+        for (uint i=1; i<=totalItemCount; i++) {
             // TODO: Use the ID to get the MarketItem, and check if the seller of the MarketItem 
             // is the person calling this function
-            if (_________) {
-                __________
+            if (idToMarketItem[i].seller == msg.sender) {
+                itemCount ++;
             }
         }
 
@@ -139,14 +139,14 @@ contract NFTMarketplace is NFT {
 
         // TODO: Now, increment from the id of the first NFT to the last NFT, 
         // but add each of the user's NFTs to the array we created. 
-        for (____________) {
+        for (uint i=1; i<=totalItemCount; i++) {
             // TODO: Same as before
-            if (_____________) {
+            if (idToMarketItem[i].seller == msg.sender) {
                 // TODO: Since our MarketItems are in storage, in order to avoid unnecessary data copying, 
                 // we should save the pointer to their location, rather than copy the data to memory. We can 
                 // to do this by using a storage type variable. 
-                MarketItem storage currentItem = _________
-                ________ = currentItem;
+                MarketItem storage currentItem = idToMarketItem[i];
+                items[currentIndex] = currentItem;
                 currentIndex += 1;
             }
         }
@@ -156,40 +156,52 @@ contract NFTMarketplace is NFT {
     /* Returns only items that a user has purchased */
     function fetchMyNFTs() public view returns (MarketItem[] memory) {
         //TODO: Initialize some variables / counters
-        uint totalItemCount = _________
-        ________ = __________
-
+        uint totalItemCount = _tokenIds.current();
+        uint purchasedItemCount = 0;
 
         // TODO: Count how many NFTs the user owns
         // TODO: Create and return an array with all the NFTs that the user has purchased
         // Think: what are we doing differently this time?
-        _________________ = ________
-        _____________________ = _____________________
-        for (___________________) {
-            if (________________________) {
-               _____________________________________
-               _____________________________________
-               _____________________________________
-            }
+        MarketItem[] memory items = new MarketItem[](purchasedItemCount);
+        uint currIndex = 1;
+
+        if (totalItemCount == 1) {
+            items[0] = idToMarketItem[1];
         }
+        for (uint i=1; i<=totalItemCount; i++) {
+            if (idToMarketItem[i].owner == msg.sender && idToMarketItem[i].sold == true) {
+               MarketItem storage currentItem = idToMarketItem[i];
+               items[currIndex] = currentItem;
+               currIndex++;
+               purchasedItemCount++;
+            }
+        } 
         return items;
     }
 
     /* Returns all unsold market items */
     function fetchMarketItems() public view returns (MarketItem[] memory) {
         // Number of NFTs
-        ___________________________
+        uint totalItemCount = _tokenIds.current();
         // TODO: get the number of unsold NFTs, we will subtract the number of sold NFTs from the total number of NFTs
-        uint unsoldItemCount = __________________________
+        uint unsoldItemCount = 0;
+        uint soldItemCount = 0;
+        for (uint i = 1; i <= totalItemCount; i++) {
+            if (idToMarketItem[i].sold) {
+                soldItemCount++;
+            }
+        }
 
-        _______________________
-        ___________________________________________________________
-        for (_______________________) {
+        unsoldItemCount = totalItemCount - soldItemCount;
+
+        MarketItem[] memory items = new MarketItem[](unsoldItemCount);
+        uint currIndex = 0;
+        for (uint i=1; i<=totalItemCount; i++) {
             //TODO: Think, what is different this time?
-            if (_____________________ == _________) {
-               _____________________________________
-               _____________________________________
-               _____________________________________
+            if (!idToMarketItem[i].sold) {
+               MarketItem storage currentItem = idToMarketItem[i];
+                items[currIndex] = currentItem;
+                currIndex++;
             }
         }
         return items;
